@@ -11,18 +11,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out code
-        uses: actions/checkout@v2
+    - name: Check out code
+      uses: actions/checkout@v2
 
-      - name: Add Comment
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const comment = 'Hello, this is a comment added by a GitHub Action!';
-            await github.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
+    - name: Add Comment
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        comment="Hello, this is a comment added by a GitHub Action!"
+        repo_owner=${{ github.repository_owner }}
+        repo_name=${{ github.event.repository.name }}
+        pr_number=${{ github.event.pull_request.number }}
+        curl -X POST -H "Authorization: token $GITHUB_TOKEN" \
+          -d "{\"body\":\"$comment\"}" \
+          "https://api.github.com/repos/$repo_owner/$repo_name/issues/$pr_number/comments"
