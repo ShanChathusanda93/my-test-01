@@ -1,4 +1,3 @@
-# Path: .github/workflows/pr-comment.yml
 name: Add Comment to PR
 
 on:
@@ -12,19 +11,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Check out code
-      uses: actions/checkout@v2
+      - name: Check out code
+        uses: actions/checkout@v2
 
-    - name: Add Comment
-      uses: actions/github-script@v6
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const comment = 'Hello, this is a comment added by a GitHub Action!';
-          const response = await github.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: comment
-          });
-          console.log(`Comment created: ${response.data.html_url}`);
+      - name: Add Comment
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const comment = 'Hello, this is a comment added by a GitHub Action!';
+            await github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
