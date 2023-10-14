@@ -16,11 +16,11 @@ jobs:
 
     - name: Add Comment
       env:
-        GITHUB_TOKEN: ${{ secrets.PR_COMMENT }}
+        GITHUB_TOKEN: ${{ secrets.PR_COMMENT_SECRET }}
       run: |
         owner=$(echo '${{github.repository_owner}}')
         repo=$(echo '${{github.repository}}')
         pr_number=$(echo '${{github.event.number}}')
-        curl -X POST https://api.github.com/repos/$owner/$repo/issues/$pr_number/comments -H 'Authorization: token ${{secrets.PR_COMMENT}}' -d '{"body":"PR builder started."}'
+        curl -X POST https://api.github.com/repos/$owner/$repo/issues/$pr_number/comments -H 'Authorization: token ${{secrets.PR_COMMENT_SECRET}}' -d '{"body":"PR builder started."}'
     - uses: actions/checkout@v2
 
