@@ -8,6 +8,13 @@ jobs:
   add-issue-to-project:
     runs-on: ubuntu-latest
     steps:
+      - name: Debug Event Data
+        run: |
+          echo "Comment body: ${{ github.event.comment.body }}"
+          echo "Issue node_id: ${{ github.event.issue.node_id }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Actor: ${{ github.actor }}"
+
       - name: Check for Best/Worst case dates
         id: check_comment
         run: |
@@ -23,11 +30,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Extract project number from URL
           project_url="https://github.com/users/ShanChathusanda93/projects/2"
           project_number="2"
           owner="ShanChathusanda93"
-          # Get project ID using GitHub CLI
           project_id=$(gh api graphql -f query='query { user(login: "'$owner'") { projectV2(number: '$project_number') { id } } }' --jq '.data.user.projectV2.id')
           echo "project_id=$project_id" >> $GITHUB_OUTPUT
 
@@ -38,5 +43,4 @@ jobs:
         run: |
           issue_id=${{ github.event.issue.node_id }}
           project_id=${{ steps.get_project_id.outputs.project_id }}
-          gh api graphql -F issueId=$issue_id -F projectId=$project_id -f query='mutation($issueId:ID!, $projectId:ID!) { addProjectV2ItemById(input: {projectId: $projectId, contentId: $issueId}) { item { id } } }'
-
+          gh api graphql -F issueId=$issue_id -F projectId=$project_id -f query='mutation($issueId:ID!, $projectId:ID!) { addProjectV2ItemById(input: {projectId: $project_id, contentId: $issue_id}) { item { id } } }'
