@@ -1,26 +1,42 @@
-name: Add Comment to PR
+name: Add Issue to Project on Comment
 
 on:
-  pull_request:
-    types:
-      - opened
-      - synchronize
+  issue_comment:
+    types: [created]
 
 jobs:
-  add-comment:
+  add-issue-to-project:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Check out code
-      uses: actions/checkout@v2
+      - name: Check for Best/Worst case dates
+        id: check_comment
+        run: |
+          body="${{ github.event.comment.body }}"
+          if [[ "$body" == *"Best case"* && "$body" == *"Worst case"* ]]; then
+            echo "::set-output name=add_to_project::true"
+          else
+            echo "::set-output name=add_to_project::false"
+          fi
 
-    - name: Add Comment
-      env:
-        GITHUB_TOKEN: ${{ secrets.PR_COMMENT }}
-      run: |
-        owner=$(echo '${{github.repository_owner}}')
-        repo=$(echo '${{github.repository}}')
-        pr_number=$(echo '${{github.event.number}}')
-        curl -X POST https://api.github.com/repos/$owner/$repo/issues/$pr_number/comments -H 'Authorization: token ${{secrets.PR_COMMENT}}' -d '{"body":"PR builder started."}'
-    - uses: actions/checkout@v2
+      - name: Get Project ID from URL
+        id: get_project_id
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Extract project number from URL
+          project_url="https://github.com/users/ShanChathusanda93/projects/2"
+          project_number="2"
+          owner="ShanChathusanda93"
+          # Get project ID using GitHub CLI
+          project_id=$(gh api graphql -f query='query { user(login: "'$owner'") { projectV2(number: '$project_number') { id } } }' --jq '.data.user.projectV2.id')
+          echo "project_id=$project_id" >> $GITHUB_OUTPUT
+
+      - name: Add issue to GitHub Project
+        if: steps.check_comment.outputs.add_to_project == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          issue_id=${{ github.event.issue.node_id }}
+          project_id=${{ steps.get_project_id.outputs.project_id }}
+          gh api graphql -F issueId=$issue_id -F projectId=$project_id -f query='mutation($issueId:ID!, $projectId:ID!) { addProjectV2ItemById(input: {projectId: $projectId, contentId: $issueId}) { item { id } } }'
 
